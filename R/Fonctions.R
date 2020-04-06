@@ -1,4 +1,13 @@
-################ Recherche et vérification de POLYGON ##############
+##############################
+#' Recherche et vérification de POLYGON
+#'
+#' @return La fonction renvoie un polygone.
+#' @param poly = périmètre sous forme de polygone.
+#' @import sf
+#' @import tcltk
+#' @author Bruciamacchie Max
+#' @export
+#'
 Find_Verif_poly <- function(poly) {
   if (is.null(poly)) {
     file <- tk_choose.files(caption = "Choix du périmètre",
@@ -15,7 +24,16 @@ Find_Verif_poly <- function(poly) {
   return(perimetre)
 }
 
-################ Recherche et vérification de POINT ##############
+##############################
+#' Recherche et vérification de POINT
+#'
+#' @return La fonction renvoie un polygone.
+#' @param poly = périmètre sous forme de polygone.
+#' @import sf
+#' @import tcltk
+#' @author Bruciamacchie Max
+#' @export
+#'
 Find_Verif_point <- function(points) {
   if (is.null(points)) {
     file <- tk_choose.files(caption = "Choix du points",
@@ -32,11 +50,17 @@ Find_Verif_point <- function(points) {
   return(pts)
 }
 
-
-
-
-
-################ Extraction des placettes IFN au voisinage foret ##############
+##############################
+#' Extraction des placettes IFN au voisinage foret
+#'
+#' @return La fonction renvoie un polygone.
+#' @param shp = périmètre sous forme de polygone.
+#' @param TailleBuffer= taille du buffer. par défaut TailleBuffer=NULL
+#' @import sf
+#' @import tcltk
+#' @author Bruciamacchie Max
+#' @export
+#'
 ExtractPlac <- function(shp, TailleBuffer=NULL) {
   shp <- shp %>%
     st_transform(2154) %>%
@@ -62,7 +86,17 @@ ExtractPlac <- function(shp, TailleBuffer=NULL) {
     ungroup()
 }
 
-################ Extraction des arbres IFN au voisinage foret ##############
+##############################
+#' Extraction des arbres IFN au voisinage foret
+#'
+#' @return La fonction renvoie un polygone.
+#' @param shp = périmètre sous forme de polygone.
+#' @param TailleBuffer= taille du buffer. par défaut TailleBuffer=NULL
+#' @import sf
+#' @import tcltk
+#' @author Bruciamacchie Max
+#' @export
+#'
 ExtractArbres <- function(spdf) {
   # ------------------- Arbres
   Gha <- IFNarbres %>%
