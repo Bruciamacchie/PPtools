@@ -223,7 +223,7 @@ TarifChaude(13, Diams, Hauts)
 <<TarifErreurSch>>=
 data(VolEchan)
 data(VolLot)
-TarifErreurSch(VolEchan,VolLot)
+print(xtable(TarifErreurSch(VolEchan,VolLot)))
 @
 
 

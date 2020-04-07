@@ -58,7 +58,7 @@
 
 \definecolor{grey}{rgb}{0.9,0.9,0.9}
 
-<<OptionsGenerales, include=FALSE>>=
+<<OptionsGenerales_ancien, include=FALSE, eval = F>>=
 opts_chunk$set(concordance=T,include=T,tidy=F, warning=F, comment=F, error=F)
 opts_chunk$set(size='normalsize')
 opts_chunk$set(fig.path='Figures/', dev='pdf')
@@ -69,4 +69,16 @@ par(mar=c(0,0,0,0))
 options(scipen=999) # disable scientific notation
 @
 
-
+<<OptionsGenerales, include = F>>=
+# TODO : supprimer les arguments inutiles des chunks (répétition)
+# repFigures <- "figures/" # debug or "figures" ?
+opts_chunk$set(
+  concordance = T, include = T, eval = T, tidy = F, cache = FALSE, 
+  warning = F, comment = F, error = F, message = F, echo = F, 
+  
+  fig.path = repFigures, dev = 'pdf', fig.align = 'center', fig.show = 'hold', 
+  size = 'normalsize', eval.after  =  'fig.cap', fig.pos = 'h', results = 'asis'
+)
+options(width = 45, guiToolkit = "tcltk")
+par(mar = c(0, 0, 0, 0))
+@
