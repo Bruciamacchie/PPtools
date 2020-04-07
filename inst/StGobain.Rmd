@@ -1,0 +1,71 @@
+---
+title: "Calcul des coefficients de variations"
+author: "Fichier Rmarkdown créé par Max bruciamacchie"
+date: "17 avril 2017"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, echo=F, include=FALSE}
+knitr::opts_chunk$set(echo = T, eval=F)
+```
+
+```{r, echo=F, warning=F, message=F}
+library(PPtools)
+```
+
+
+
+## Création du périmètre
+Ce programme nécessite en entrée un shape de la forêt. Il va être simplifié en procédant à l'union de tous polygones pour ne garder que le périmètre. Les éventuels polygone sous forme de trous de faible dimension seront supprimés.
+```{r ,echo=F, warning=F, message=F}
+res <- UnionPolyDeleteHole(nom="Perimetre")
+```
+
+**Nom du shape en entrée** :    
+
+**Nom du shape en sortie** : il porte le nom de  et se trouve dans le répertoire .
+
+```{r , echo=F}
+res2 <- CvIFN(file=res$input, rep =dirname(res$input))
+```
+
+## Localisation placettes IFN
+La carte ci-après permet de visualiser les placettes utilisées pour calculer les coefficients de variation.
+```{r , echo=F, fig.height=3.5, fig.cap="Carte des placettes IFN utilisées"}
+par(mar=c(0,0,0,0))
+plot(res2$perimetre)
+plot(res2$placettes, col='red', add=T)
+```
+
+
+## Coefficients de variation
+```{r , echo=F, message=F, warning=F}
+knitr::kable(res2$tab, digits = 2, caption = "Coefficients de variation de la surface terrière totale, par essence, catégorie de diamètre, et pour la somme des BM et GB des 2 essences principales.")
+```
+
+
+## Tarifs de cubage
+```{r , echo=F, warning=F, message=F, comment=F, results='hide'}
+tab <- TarifIFN(res2$perimetre)
+```
+
+```{r , echo=F, message=F, warning=F}
+knitr::kable(tab, digits = 1, caption = "Types et numéros de tarifs.")
+```
+
+
+```{r}
+tab <- AccDIFN(enreg=T)
+tab$tab
+```
+
+
+## Création réseau placettes
+```{r , echo=F, fig.height=3.5, fig.cap="Réseau de placettes permanentes proposé"}
+shp <- CreateNetPP(Nb=450, Objet=TRUE)
+par(mar=c(0,0,0,0))
+plot(shp, col='blue', pch=19)
+```
+

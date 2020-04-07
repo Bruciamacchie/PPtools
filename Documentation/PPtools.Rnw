@@ -1,0 +1,316 @@
+\documentclass{article}
+
+<<Preambule, child="Preambule.Rnw">>=
+@
+
+
+\begin{document}
+
+\begin{figure}[ht]
+   \includegraphics[width=3cm]{Images/LogoPPtools.png}
+\end{figure}
+
+ \vspace*{2cm}
+\begin{center}
+ {\LARGE Package PPtools} \\
+ Janvier - 2020
+ \end{center}
+ \vspace*{3cm}
+
+\tableofcontents
+
+\newpage
+\section{Installation}
+Pour pouvoir utiliser le package il faut installer sur son ordinateur un certain nombre de package.
+
+\subsection{A n'installer qu'une fois}
+Les packages généraux, DataForet et PPtools n'ont besoin d'être installés qu'une fois.
+
+\subsubsection{Installation des packages généraux nécessaires au fonctionnement de \texttt{PPtools}}
+
+<<Installation1, eval=F>>=
+list.of.packages <- c(c("Hmisc","nngeo","tidyverse","gstat","openxlsx","readxl",
+                        "sp","sf","tcltk","tools"))
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+@
+
+\subsubsection{Installation du package \texttt{DataForet}}
+<<Installation2, eval=F>>=
+install.packages("devtools")
+devtools::install_github("Bruciamacchie/DataForet")
+@
+
+\subsubsection{Installation du package \texttt{PPtools}}
+<<Installation3, eval=F>>=
+devtools::install_github("Bruciamacchie/PPtools")
+@
+
+\subsection{Activation des librairies à chaque nouvelle session}
+<<Librairies, message=F>>=
+library(tidyverse)
+library(sf)
+library(DataForet)
+library(PPtools)
+library(lwgeom)
+# source("../R/Fonctions.R")
+@
+
+
+\section{Base de données IFN}
+
+\subsection{CvIFN}
+La fonction \textbf{\texttt{CvIFN}} renvoie des coefficients de variation sur la surface terrière en utilisant la base de données arbres de l'IFN. La fonction nécessite en entrée un shape correspondant au périmètre retenu : forêt, massif, sylvoécorégion, etc.  \\
+Un buffer est appliqué autour de la forêt afin que la zone de recherche des placettes de l'IFN fasse au moins 2000 ha. Au-delà de cette surface le buffer est fixé à 450 m. Pour les placettes remesurées, seule l'information la plus récente est retenue.\\
+
+Les informations retournées concernent : \\
+- les essences contribuant à plus de 10\% de la surface terrière ;  \\
+- les PER, PB, BM et GB ;  \\
+- les gros bois de l'essence contribuant le plus à la surface terrière.
+
+<<CvIFN, eval=F>>=
+res <- CvIFN()
+# ----- localisation des placettes IFN
+plot(st_geometry(res$placettes), col='red')
+plot(st_geometry(res$perimetre), add=T)
+
+res$tab
+@
+
+\subsection{CvIFNmult}
+La fonction \textbf{\texttt{CvIFNmult}} a la même finalité que la fonction fonction \textbf{\texttt{CvIFN}} mais recherche les coefficients de variation pour l'ensemble de la propriété mais aussi par regroupement de polygones, strates, groupe de parcelles, etc.
+
+<<CvIFNmult, eval=F>>=
+res <- CvIFNmult()
+# ------ Résultats à l'échelle de chaque forêt et au global
+res$tab %>%
+   filter(Population == "Totale")
+res$Nbres
+@
+
+
+\subsection{TarifIFN}
+La fonction \textbf{\texttt{TarifIFN}} renvoie par essence les informations sur les numéros de tarif Schaeffer à une entrée compatibles avec le volume géométrique bois fort tige de l'IFN. Ces informations ont été extraites de la base de données arbres de l'IFN. La fonction nécessite en entrée un shape correspondant au périmètre retenu : forêt, massif, sylvoécorégion, etc.\\
+De même que pour la fonction \textbf{\texttt{CvIFN}}, un buffer est appliqué autour du périmètre retenu afin que la zone de recherche des placettes de l'IFN fasse au moins 2000 ha. Pour les placettes remesurées, seule l'information la plus récente est retenue. Ces opérations permettent de constituer un échantillon d'arbres mesurés par l'IFN. \\
+
+La fonction \textbf{\texttt{TarifIFN}} possède les arguments suivants : \\
+- perim : périmètre du territoire (forêt, massif, région natuelle, etc.) au format sf. Si aucun périmètre n'est fourni, une boîte de dialogue permet de choisir un périmètre au format .shp.\\
+- SeuilCircf : seuil minimum de circonférence. Seuls les tiges dont la circonférence est supérieure à ce seuil sont retenues. Par défaut le seuil est fixé à 50 cm. \\
+- SeuilNb : seuil minimal du nombre d'arbres dans l'échantillon IFN pour qu'une essence soit retenue. Par défaut ce seuil est égal à 10.\\
+- pas : résolution en mètre de la carte en sortie (par défaut pas = 1000 m)\\
+- UseSer = argument permettant de choisir si le calcul des numéros de tarif doit se faire au sein d'une même sylvoécorégion. Par défaut, UseSer=FALSE.\\
+- enreg = argument permettant de choisir l'enregistrement ou pas du tableau au format .xlsx. Par défaut enreg=FALSE.
+
+
+<<TarifIFN, eval=F>>=
+# Récupération du périmètre de la Forêt domaniale de Montargis
+data("FD")
+perim = FD %>% filter(IIDTN_FRT == "F09405S")
+
+res <- TarifIFN(perim, pas=500)
+
+# Résultats principaux
+res$Ktab
+res$Kgraph
+res$MoyTab
+# Autres résultats
+
+res$MoyGraph
+res$Ksf
+@
+
+La fonction renvoie en sortie cinq résultats, Ktab, Kgraph, MoyTab, MoyGraph, Ksf. Les résultats qui commencent par un K sont obtenus par krigeage. Cette technique permet d'utiliser l'information ponctuelle disponible (placettes IFN) pour la transformer en information spatialement continue. Elle permet une pondération en fonction de la distance, les placettes à l'extérieur du périmètre ayant moins de poids. La technique du krigeage n'est appliquée qu'aux essences dont l'échantillon IFN à une taille supérieur à un seuil fixé par défaut à 10.\\
+Les résultats qui commencent par Moy sont obtenu par simple moyenne.\\
+
+Parmi ces cinq résultats, trois sont plus importants.\\
+- \textbf{Ktab} correspond au tableau fournissant les tarifs de cubage proposés pour les essences dont l'effectif IFN est supérieur au seuil choisi par l'opérateur. Si l'opérateur choisit l'agurment enreg=TRUE, ce tableau est enregistré au format Excel (.xlsx). \\
+- \textbf{Kgraph} correspond à la carte de la répartition spatiale des numéros de tarif par essence et type de tarif. La figure \ref{Numtarifs} fournit un exemple dans le cas de la forêt domaniale de Montargis. Elle permet de détecter des variations pouvant traduire des hauteurs différentes.\\
+- \textbf{MoyTab} fournit par essence, le type de tarif (celui dont le coefficient de variation du numéro est le plus faible) et le numéro de tarif associé. Les colonnes Nb et CV permettent de faire des calculs d'erreur lors de l'utilisation des tarifs. Ce tableau est obtenu par simple moyenne par essence et type de tarif. Tous les arbres ont le même poids contrairement au krigeage où les arbres ont un poids inversement proportionnel au pixel.
+
+\begin{figure}[H]
+ \begin{center}
+ \includegraphics[height=10cm]{Images/Numtarifs.pdf}
+\end{center}
+\caption{carte de la répartition spatiale des numéros de tarif par essence et type de tarif}
+\label{Numtarifs}
+\end{figure}
+
+la fonction renvoie également deux objets complémentaires :\\
+- \textbf{MoyGraph} est comparable au graphique issu de la fonction \textbf{\texttt{TarifFindSch}}  ;\\
+- \textbf{Ksf} correspond à un objet au format sf. Il fournit par carré dont la taille est choisie par l'opérateur (par défaut la taille est égale à 1 km car elle correspond au découpage retenu par l'IFN) le numéro pour chacun des 4 tarifs retenus (SchR, SchI, SchL, SchTL).
+
+
+
+\subsection{Accroissement sur le diamètre}
+La fonction \textbf{\texttt{IFNacctD}} récupère dans la base de données de l'IFN les arbres vivants ne semblant pas avoir subi d'accident, ayant moins de 25 \% de branches mortes dans la partie supérieure du houppier qui ont directement accès à la lumière.
+
+<<IFNacctD, eval=F>>=
+acct <- IFNacctD()
+# ou bien
+data("FD")
+perim = FD %>% filter(IIDTN_FRT == "F10451Y")
+acct <- IFNacctD(perim)
+# résultats
+acct$tab
+acct$Effectif
+acct$Graph
+@
+
+
+
+\subsection{CarteEssenceSer}
+La fonction renvoie une carte des sylvoécorégions avec un niveau de rouge proportionnel au volume bois fort tige de l'essence retenue. Les sylvoécorégions qui ne contiennent pas l'essence retenue sont en gris foncé. Les points bleus permettent de localiser les placettes IFN contenant l'essence retenue. Leur densité permet d'estimer la précision du volume.
+La fonction nécessite en entrée le code IFN de l'essence retenue. Par exemple le code "09" correspond au hêtre.
+<<CarteEssenceSer, fig.height=5, fig.pos='H', fig.cap="Localisation et importance en volume du hêtre - Souce IFN">>=
+CarteEssenceSer("09")
+@
+
+\section{Fonctions générales}
+
+
+\subsection{Tarifs de cubage}
+
+\subsubsection{TarifFindSch}
+La fonction \textbf{\texttt{TarifFindSch}} permet de trouver parmi les tarifs Schaeffer, ceux qui sont le plus adaptés au cubage d’un lot d’arbres. Elle nécessite en entrée un fichier au format xlsx contenant 3 colonnes : Essence, Diam et Vol. La fonction ne retient que les arbres dont le diamètre est compris entre 17,5 et 80 cm. \\
+
+La fonction renvoie : \\
+- un tableau qui fournit par essence le numéro de tarif Schaeffer rapide, intermédiaire, lent ou très lent ainsi que les coefficients de variation associés (nom des tarifs complétés par «cv»). Les moyennes sont pondérées par les volumes correspondants. \\
+- Un graphique permettant d’apprécier la variabilité des numéros. \\
+
+Puisque la fonction renvoie 2 informations il est préférable de stocker le résultat dans une variable temporaire nommée par exemple res.
+
+<<TarifFindSch, eval=F>>=
+res <- TarifFindSch()
+@
+
+Le tableau peut ensuite être imprimé
+<<TarifFindSchTab, eval=F>>=
+res$tab
+@
+ainsi que le graphique montrant la variabilité par diamètre. Il n'est affiché que pour les essences dont l'effectif est supérieur ou égal à 3.
+<<TarifFindSchGraph, eval=F>>=
+res$graph
+@
+
+\subsubsection{Tarifs Schaeffer à 1 entrée}
+<<TarifSch1, eval=F>>=
+Types = c("SchR","SchR","SchL")
+Types2 = c("SchR","Sch","SchL")
+Nums = c(9,8,9)
+Diams = c(45,45,50)
+TarifSch(Types,Nums,Diams)
+TarifSch(Types2,Nums,Diams)
+@
+
+
+
+\subsubsection{Tarifs Schaeffer à 2 entrées}
+<<TarifSch2, eval=F>>=
+Hauts <- c(13,14,14)
+Diams = c(45,45,50)
+TarifSch2(2, Diams, Hauts)
+@
+
+\subsubsection{Tarifs Chaudé à 2 entrées}
+<<TarifChaude, eval=F>>=
+Hauts <- c(13,14,14)
+Diams = c(45,45,50)
+TarifChaude(13, Diams, Hauts)
+@
+
+
+\subsubsection{TarifErreurSch}
+<<TarifErreurSch>>=
+data(VolEchan)
+data(VolLot)
+TarifErreurSch(VolEchan,VolLot)
+@
+
+
+\subsection{CSV2SHP}
+La fonction \textbf{\texttt{CSV2SHP}} permet de convertir un fichier de points au format CSV en un fichier géoréférencé. Elle renvoie un objet au format sf mais l'enregistre dans le format indiqué dans l'extension de l'argument nom. Le fichier est enregistré dans le répertoire en cours.
+
+<<CSV2SHP, eval=F>>=
+pts <- CSV2SHP()
+@
+
+\subsection{CreatePerim}
+Dans le cas où l'opérateur possède le fichier des placettes mais pas le périmètre, la fonction \textbf{\texttt{CreatePerim}} propose un périmètre contenant l'ensemble des placettes.
+<<CreatePerim, eval=F>>=
+res <- CreatePerim()
+plot(res$perim)
+plot(st_geometry(res$pts), add=T)
+@
+
+\subsection{RmSmallPolys}
+la fonction \textbf{\texttt{RmSmallPolys}}
+<<RmSmallPolys, eval=F>>=
+res <- RmSmallPolys()
+
+plot(st_geometry(res$Union), border='red')
+# plot(st_geometry(res$Union), border='blue', add=T)
+plot(st_geometry(res$Après), add=T)
+@
+
+\begin{figure}[H]
+ \begin{center}
+ \includegraphics[height=8cm]{Images/RmSmall.pdf}
+\end{center}
+\caption{Suppression des petits polygones.}
+\label{Numtarifs}
+\end{figure}
+
+
+\section{Gestion des placettes}
+\subsection{Conception de la maille}
+La fonction \textbf{\texttt{CreateNetPP}} construit un réseau de placettes permanentes en fonction du périmètre de la zone d'étude. Elle possède les arguments suivants : \\
+- Nb : nombre souhaité de placettes. \\
+- Cellsize : écartement fixe entre placettes. Par défaut le paramètre est NULL. S’il n’est pas NULL, le paramètre Cellsize prime sur le paramètre Nb. \\
+- Type = type de maille souhaitée. Les options possibles sont : random, regular (option par défaut), stratified, nonaligned, hexagonal. \\
+- enrg = Si TRUE (valeur par défaut) la fonction enregistre dans un fichier au format .shp le point le plus proche de chaque placette situé sur une limite interne ou externe (limites de parcelles, pistes, etc.). \\
+- Nom : nom souhaité pour le fichier de sortie.
+
+<<CreateNetPP, eval=F>>=
+res <- CreateNetPP(Cellsize =150)
+plot(st_geometry(res$perim))
+plot(st_geometry(res$Plac), add=T, col='blue')
+@
+
+\subsection{Transfert vers un GPS}
+La fonction \textbf{\texttt{WritePointGPX}} permet de convertir au format .gpx le fichier des placettes créé avec la fonction CreateNetPP. Elle renvoie un fichier de waypoints au format .gpx qui pourra être charger dans un gps. Elle permet de choisir le champ qui sera utilisé pour identifier les placettes. Par défaut le système de projection retenu correspond au numéro EPSG = 4326 (latitude/longitude).
+
+<<WritePointGPX, eval=F>>=
+WritePointGPX()
+@
+
+\subsection{Accès}
+La fonction \textbf{\texttt{AccessPLot}} permet de déterminer les points d'accès aux pacettes. Ils sont situés sur les limites internes ou externes (limites de parcelle, piste, etc.)
+
+<<AccessPLot, eval=F>>=
+data("ParFor")
+res <- AccessPlot(ParFor, Nb=250)
+# Localisation des placettes et des accès
+par(mar=c(0,0,0,0))
+plot(st_geometry(res$parcelles))
+plot(st_geometry(res$Plac),col='blue', add=T, pch=3, cex=0.5)
+plot(st_geometry(res$pts), col='red', add=T, pch=19, cex=0.5)
+# Analyse des distances d'accès
+res$graph
+mean(res$distances$Dist)
+@
+
+La figure \ref{AccesPlacettes} permet de localiser les accès des différentes placettes.\\
+
+\begin{figure}[H]
+ \begin{center}
+ \includegraphics[height=15cm]{Images/AccesPlacettes.pdf}
+\end{center}
+\caption{Localisation des accès pour les différentes placettes}
+\label{AccesPlacettes}
+\end{figure}
+
+\newpage
+\listoffigures
+% \listoftables
+
+\end{document}
