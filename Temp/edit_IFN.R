@@ -1,10 +1,15 @@
 # Installation/Activation des packages nécessaires
 library(easypackages)
-# suppressMessages(
+
+# library(tcltk)
+# library(sf)
+# library(rlang)
+# library(knitr)
+
 packages(
   "rlang","rmarkdown","knitr","tools","here",
   "tidyverse","openxlsx","xtable","ggrepel","ggthemes",
-  "gWidgets2", "gWidgets2tcltk",  
+  "gWidgets2", "gWidgets2tcltk",
    "scales","grid","gridExtra"
 )
 
@@ -14,9 +19,9 @@ edit_guide_doc <- function(template = "inst/IFNinfos.Rnw") {
   ##### 1/ Initialisation #####
   rep = dirname(here::here("IFNinfos.rnw"))
   db = new.env()     # création d'un nouvel environnement
-  db = global_env()  # rlang package
+  # db = global_env()  # rlang package - debug uniquement
   year <- as.numeric(format(Sys.time(), "%Y")) # année en cours
-  
+
   # sanity checks (permet de s'assurer qu'un objet/package? existe bien)
   # indb <- ensures(all(. %in% names(db)))
   # indb(c(load(arch1), load(arch2)))
@@ -25,11 +30,13 @@ edit_guide_doc <- function(template = "inst/IFNinfos.Rnw") {
   with(db, {
     
     # -- Choix du fichier
-    file <- tk_choose.files(caption = "Choix du périmètre",
-                            filters=matrix(c(".shp",".shp"),1,2, byrow = T))
+    file <- tk_choose.files(
+      caption = "Choix du périmètre",
+      filters = matrix(c(".shp",".shp"), 1, 2, byrow = T)
+    )
     if (length(file) > 0) {
       perim <- st_read(file, quiet=T)
-    } else { stop("Import annulé") }
+    } else { stop("Aucun périmètre sélectionné - Import annulé") }
     
     # -- création du dossier de sortie
     output_dir <- paste(dirname(file),"out",sep="/")
@@ -38,8 +45,9 @@ edit_guide_doc <- function(template = "inst/IFNinfos.Rnw") {
     
     # -- définition des arguments nécessaires au knit
     repPdf     <- file.path(output_dir)
-    repLogos   <- file.path(rep, "Images/")
-    repFigures <- file.path(rep, "figures/")
+    repFigures <- file.path(output_dir, "figures/")
+    # repLogos   <- list.files(system.file("R", package = "PPtools")
+    repLogos   <- file.path(rep, "inst/Images/")
     
     # -- superassignements
     # nom de la sortie en .tex
@@ -76,4 +84,4 @@ edit_guide_doc <- function(template = "inst/IFNinfos.Rnw") {
 }
 ##### /\ #####
 
-edit_guide_doc() # debug
+# edit_guide_doc() # debug

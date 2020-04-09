@@ -61,20 +61,9 @@
 
 \definecolor{grey}{rgb}{0.9,0.9,0.9}
 
-<<OptionsGenerales_ancien, include=F, eval=F>>=
-opts_chunk$set(concordance=T,include=T,tidy=F, warning=F, comment=F, error=F, echo=F, message=F)
-opts_chunk$set(size='normalsize')
-opts_chunk$set(fig.path='Figures/', dev='pdf')
-opts_chunk$set(fig.align='center',fig.show='hold')
-options(width=45)
-opts_knit$set(eval.after = 'fig.cap') # evaluate fig.cap after the chunk
-par(mar=c(0,0,0,0))
-options(scipen=999) # disable scientific notation
-@
-
 <<OptionsGenerales, include = F>>=
 # TODO : supprimer les arguments inutiles des chunks (répétition)
-# repFigures <- "figures/" # debug or "figures" ?
+# repFigures <- "figures/" # debug
 opts_chunk$set(
   concordance = T, include = T, eval = T, tidy = F, cache = FALSE,
   warning = F, comment = F, error = F, message = F, echo = F,
@@ -132,6 +121,10 @@ La figure \ref{fig:LocalisationIFN} permet de localiser les placettes IFN (repr�
 
 # data("FD")
 # perim = FD %>% filter(IIDTN_FRT == "F09405S")
+
+# -- debug VD
+# file <- "/Users/Valentin/Travail/Outils/Cartographie/dossiers/Pichery/Champlalot/data/SIG/vecteurs/perimetres/perimetre_foret_L93.shp" # debug VD
+# perim <- st_read(file, quiet=T) # debug VD
 
 dendro <- CvIFN(perim)
 
@@ -205,7 +198,16 @@ print(xtable(acct$Effectif, caption = "Nombre d'arbres extraits de la base IFN e
 
 Le tableau \ref{IFNacctDtab} fournit les accroissements sur le diamètre (en cm/an) par essence et classe de diamètre.
 <<IFNacctDtab, results='asis', fig.pos="H">>=
-print(xtable(acct$tab, caption = "Accroissement sur le diamètre (en cm/an) par essence et classe de diamètre.", digits=c(rep(0,2),rep(2,3)), label = "IFNacctDtab", caption.placement = "top"), include.rownames=FALSE)
+print(
+  xtable(
+    acct$tab, 
+    caption = "Accroissement sur le diamètre (en cm/an) par essence et classe de diamètre.", 
+    digits=c(rep(0, 2), rep(2, dim(acct$tab)[2] - 1)), 
+    label = "IFNacctDtab", 
+    caption.placement = "top"
+  ), 
+  include.rownames = FALSE
+)
 @
 
 La figure \ref{fig:IFNacctDgraph} illustre l'évolution pour chacune des essences retenues de l'accroissement sur le diamètre en fonction du diamètre.
