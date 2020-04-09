@@ -1,0 +1,238 @@
+\documentclass{article}
+
+%%%%%%%%%%%%%%%% PREAMBULE %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{natbib}
+\usepackage[french]{babel}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{eurosym}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{fancyvrb}
+\usepackage{float}
+\usepackage{fix-cm} % Allows increasing the font size of specific fonts beyond LaTeX default specifications
+\usepackage{ifthen}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage{eso-pic}
+\usepackage{geometry}
+\usepackage{multicol}
+\usepackage{colortbl}
+\usepackage{booktabs}
+\usepackage{pgfsys}
+\usepackage{keyval}
+\usepackage{subfig}
+\usepackage{titletoc}
+\usepackage{lscape}
+
+%%%% changement marge %%%%
+\newenvironment{changemargin}[2]{\begin{list}{}{%
+\setlength{\topsep}{0pt}%
+\setlength{\leftmargin}{0pt}%
+\setlength{\rightmargin}{0pt}%
+\setlength{\listparindent}{\parindent}%
+\setlength{\itemindent}{\parindent}%
+\setlength{\parsep}{0pt plus 1pt}%
+\addtolength{\leftmargin}{#1}%
+\addtolength{\rightmargin}{#2}%
+}\item }{\end{list}}
+%%%% fin macro %%%%
+
+\addto\captionsfrench{\def\figurename{Figure}\def\tablename{Tableau}}
+
+\newcommand{\mytilde}{\lower.80ex\hbox{\char`\~}\xspace}
+
+\voffset -2cm
+\hoffset 0cm
+\oddsidemargin 0cm
+\evensidemargin -0.5cm
+\textwidth 17cm
+\topmargin 1cm
+\textheight 24cm
+\parindent 0cm
+\columnsep 0.7cm
+
+\setcounter{tocdepth}{3}     % Dans la table des matieres
+\setcounter{secnumdepth}{3}  % Avec un numero.
+
+\definecolor{grey}{rgb}{0.9,0.9,0.9}
+
+<<OptionsGenerales_ancien, include=F, eval=F>>=
+opts_chunk$set(concordance=T,include=T,tidy=F, warning=F, comment=F, error=F, echo=F, message=F)
+opts_chunk$set(size='normalsize')
+opts_chunk$set(fig.path='Figures/', dev='pdf')
+opts_chunk$set(fig.align='center',fig.show='hold')
+options(width=45)
+opts_knit$set(eval.after = 'fig.cap') # evaluate fig.cap after the chunk
+par(mar=c(0,0,0,0))
+options(scipen=999) # disable scientific notation
+@
+
+<<OptionsGenerales, include = F>>=
+# TODO : supprimer les arguments inutiles des chunks (répétition)
+# repFigures <- "figures/" # debug or "figures" ?
+opts_chunk$set(
+  concordance = T, include = T, eval = T, tidy = F, cache = FALSE,
+  warning = F, comment = F, error = F, message = F, echo = F,
+
+  fig.path = repFigures, dev = 'pdf', fig.align = 'center', fig.show = 'hold',
+  size = 'normalsize', eval.after  =  'fig.cap', fig.pos = 'h', results = 'asis'
+)
+options(width = 45, guiToolkit = "tcltk")
+par(mar = c(0, 0, 0, 0))
+@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<Librairies, message=F, eval=T>>=
+library(tidyverse)
+library(sf)
+library(DataForet)
+library(PPtools)
+library(lwgeom)
+library(xtable)
+# source("../R/Fonctions.R")
+@
+
+\begin{document}
+
+\begin{figure}[ht]
+   \includegraphics[width=3cm]{Images/LogoPPtools.png}
+   
+   Bruciamacchie Max
+\end{figure}
+
+
+ \vspace*{2cm}
+\begin{center}
+ {\Huge Aide à la conception et à l'installation}\\
+ 
+ {\Large d'un réseau de placettes permanentes}\\
+
+  ----------- \\
+ Janvier - 2020
+ \end{center}
+ \vspace*{3cm}
+
+\tableofcontents
+
+\newpage
+
+L'aide à la conception et à l'installation d'un réseau de placettes permanentes  nécessite en entrée un shape de la zone d'étude : forêt, versant, massif, etc. Il va être simplifié en procédant à l'union de tous polygones pour ne garder que le périmètre. Les éventuels polygones sous forme de trous de faible dimension seront supprimés.
+
+\section{Sélection de la zone d'étude}
+La figure \ref{fig:LocalisationIFN} permet de localiser les placettes IFN (représentées en bleu) par rapport au perimètre de la zone d'étude retenue. Les placettes IFN ont été extraites en appliquent un buffer d'au moins 450 m autour de la zone d'étude. La valeur du buffeur est augmentée automatiquement afin que la zone de recherche fasse au moins 2000 ha.
+
+
+<<LocalisationIFN, fig.height=7, fig.pos='H', fig.cap="Localisation des placettes IFN par rapport au périmètre de la zone d'étude.">>=
+# perim <- RmSmallPolys()$Après
+
+# data("FD")
+# perim = FD %>% filter(IIDTN_FRT == "F09405S")
+
+dendro <- CvIFN(perim)
+
+# ----- localisation des placettes IFN
+plot(st_geometry(dendro$placettes), col='blue', pch=19)
+plot(st_geometry(dendro$perimetre), add=T)
+@
+
+Au final, \Sexpr{dendro$Nb} placettes IFN ont été retenues. Elles fournissent une première estimation des principales variables dendrométriques présentées au paragraphe suivant.
+
+
+\section{Dendrométrie}
+La tableau \ref{Dendro} fournit pour les différentes populations la surface terrière et le coefficient de variation associé estimés à partir des placettes IFN situées dans ou proches du périmètre d'étude. Sont distinguées : \\
+- la population totale, toutes essences et classes de diamètre à partir du diamètre de précomptage de 7,5 cm.\\
+- Les essences présentes classées par ordre décroissant de leur surface terrière.\\
+- Les catégories de diamètres toutes essences confondues.\\
+- les GB + BM ont été isolé car ils représentent l'essentiel de la valeur de consommation et de la valeur potentielle.
+- La surface terrière gros bois et bois moyen (GB + BM) des deux principales essences.
+
+<<Dendro, results='asis', fig.pos="H">>=
+print(xtable(dendro$tab, caption = "Principaux résultats dendrométriques.", 
+             digits=c(0,0,2,2), label = "Dendro", caption.placement = "top"), 
+      include.rownames=FALSE)
+@
+
+
+\section{Tarifs de cubage}
+Les tableaux ci-après fournissent par essence les informations sur les numéros de tarif Schaeffer à une entrée compatibles avec le volume géométrique bois fort tige de l'IFN.
+
+
+<<Tarifs, include=F, cache=T>>=
+res <- TarifIFN(perim, pas=500)
+@
+
+\subsection{Tarifs obtenus par simple moyenne}
+Les numéros de tarifs de cubage calculés pour chaque arbre présent sur les placettes présentées à la figure \ref{fig:LocalisationIFN} sont moyennés par essence et type de tarif. Le type de tarif retenu est celui qui correspond au plus faible coefficient de variation. Le résultat est présenté tableau \ref{TarifM}.
+
+<<TarifM, results='asis', fig.pos="H">>=
+print(xtable(res$MoyTab, caption = "Tarifs de cubage obtenus par moyennes", 
+             digits=c(rep(0,5),1,3), label = "TarifM", caption.placement = "top"), 
+      include.rownames=FALSE)
+@
+Dans ce tableau, code correspond au code essence de l'IFN, Nb au nombre d'arbres IFN échantillonnés, CV au coefficient de variation du numéro de tarif (Num).
+
+\subsection{Tarifs obtenus par krigeage}
+Le krigeage est une technique qui utilise l'information ponctuelle disponible (placettes IFN) pour la transformer en information spatialement continue. Elle permet une pondération en fonction de la distance, les placettes à l'extérieur du périmètre ayant moins de poids. La technique du krigeage n'est appliquée qu'aux essences dont l'échantillon IFN à une taille supérieur à un seuil fixé par défaut à 10. De même le type de tarif retenu est celui qui correspond au plus faible coefficient de variation. Le résultat est présenté tableau \ref{TarifK}. \\
+
+<<TarifK, results='asis', fig.pos="H">>=
+print(xtable(res$Ktab, caption = "Tarifs de cubage obtenus par krigeage.", 
+             digits=c(rep(0,4),1), label = "TarifK", caption.placement = "top"), 
+      include.rownames=FALSE)
+@
+
+La figure \ref{fig:Kgraph} représente la variabilité des numéros pour les essences retenues pour le krigeage alors que le tableau \ref{TarifK} en fournit la moyenne. Cette figure permet de s'interroger sur l'éventuel besoin de distinguer des zones de fertilité.
+<<Kgraph, fig.height=3, fig.pos='H', fig.cap="Variabilité des numéros par essence.">>=
+res$Kgraph
+@
+
+
+\section{Accroissements sur le diamètre}
+A partir des placettes retenus (voir figure \ref{fig:LocalisationIFN}) le programme récupère dans la base de données de l'IFN les arbres vivants ne semblant pas avoir subi d'accident, ayant moins de 25 \% de branches mortes dans la partie supérieure du houppier et qui ont directement accès à la lumière. \\
+
+<<IFNacctD, include=F>>=
+acct <- IFNacctD(perim)
+@
+
+Le tableau \ref{IFNacctDtabNb} fournit le nombre d'arbres extraits de la base IFN.
+<<IFNacctDtabNb, results='asis', fig.pos="H">>=
+print(xtable(acct$Effectif, caption = "Nombre d'arbres extraits de la base IFN et utilisés pour les calculs d'accroissement sur le diamètre.", digits=c(rep(0,4)), label = "IFNacctDtabNb", caption.placement = "top"), include.rownames=FALSE)
+@
+
+Le tableau \ref{IFNacctDtab} fournit les accroissements sur le diamètre (en cm/an) par essence et classe de diamètre.
+<<IFNacctDtab, results='asis', fig.pos="H">>=
+print(xtable(acct$tab, caption = "Accroissement sur le diamètre (en cm/an) par essence et classe de diamètre.", digits=c(rep(0,2),rep(2,3)), label = "IFNacctDtab", caption.placement = "top"), include.rownames=FALSE)
+@
+
+La figure \ref{fig:IFNacctDgraph} illustre l'évolution pour chacune des essences retenues de l'accroissement sur le diamètre en fonction du diamètre.
+<<IFNacctDgraph, fig.height=3, fig.pos='H', fig.cap="Evolution pour chacune des essences retenues de l'accroissement sur le diamètre en fonction du diamètre.">>=
+acct$Graph
+@
+
+
+
+\section{Proposition d'un réseau de placettes}
+Le nombre de placettes est calculé à partir du coefficient de variation des BM+GB (voir tableau \ref{Dendro}). En supposant que ces deux catégories de diamètre soient inventoriées  avec des placettes à angle fixe, ce coefficient a fait l'objet d'une réduction de 20\%. Le nombre de placettes correspond à un bjectif d'atteindre une précision de 10 \% sur ces deux catégories de diamètre. 
+
+<<CreateNetPP, fig.height=5, fig.pos='H', fig.cap="Proposition d'un réseau de placettes.">>=
+nb <- dendro$tab %>%
+  filter(Population == "GB + BM") %>% 
+  dplyr::select(Cv) %>% 
+  mutate(Cv = (2*Cv*0.8/0.1)^2) %>% 
+  as.integer()
+res <- CreateNetPP(perim, Nb=nb)
+plot(st_geometry(res$perim))
+plot(st_geometry(res$Plac), add=T, col='blue', pch=3, cex=0.5)
+@
+
+Remarques \\
+La fonction utilisée \textbf{\texttt{CreateNetPP}} pour construire un réseau de placettes permanentes et présente dans le package PPtools est plus complète car elle possède les arguments suivants : \\
+- Nb : nombre souhaité de placettes. \\
+- Cellsize : écartement fixe entre placettes. Par défaut le paramètre est NULL. S’il n’est pas NULL, le paramètre Cellsize prime sur le paramètre Nb. \\
+- Type = type de maille souhaitée. Les options possibles sont : random, regular (option par défaut), stratified, nonaligned, hexagonal. \\
+
+\end{document}
