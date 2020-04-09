@@ -80,7 +80,7 @@ AccessPlot <- function(parc=NULL, CreateNetPP=T, Nb=30, enrg=T, nom="Acces.shp")
   if (enrg) {
     st_write(pts, nom, update=T, delete_layer = T)
   }
-  out=list(parcelles, Plac, pts, distances, classDist, g, tab)
+  out=list(parcelles, Plac, pts, distances, classDist, g)
   names(out) <- c("parcelles", "Plac", "pts", "distances", "classDist", "graph")
   return(out)
 }

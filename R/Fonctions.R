@@ -1,14 +1,20 @@
-##############################
+#' ##############################
 #' Recherche et vérification de POLYGON
 #'
-#' @return La fonction renvoie un polygone.
+#' @description Choix du périmètre et vérification que le fichier retenu est constitué de
+#' polygone
+#' @return La fonction renvoie un objet POLYGON ou MULTIPOLYGON
+#' 
 #' @param poly = périmètre sous forme de polygone.
+#' 
 #' @import sf
 #' @import tcltk
+#' 
 #' @author Bruciamacchie Max
+#' 
 #' @export
-#'
-Find_Verif_poly <- function(poly) {
+
+Find_Verif_poly <- function(poly=NULL) {
   if (is.null(poly)) {
     file <- tk_choose.files(caption = "Choix du périmètre",
                             filters=matrix(c(".shp",".shp"),1,2, byrow = T))
@@ -24,7 +30,7 @@ Find_Verif_poly <- function(poly) {
   return(perimetre)
 }
 
-##############################
+#' ##############################
 #' Recherche et vérification de POINT
 #'
 #' @return La fonction renvoie un polygone.
@@ -34,7 +40,7 @@ Find_Verif_poly <- function(poly) {
 #' @author Bruciamacchie Max
 #' @export
 #'
-Find_Verif_point <- function(points) {
+Find_Verif_point <- function(points=NULL) {
   if (is.null(points)) {
     file <- tk_choose.files(caption = "Choix du points",
                             filters=matrix(c(".shp",".shp"),1,2, byrow = T))
@@ -149,6 +155,21 @@ ExtractArbres <- function(spdf) {
     rename(Population = Cat,
            Gha = Moy)
   tab <- rbind(tab, GhaPla)
+  
+  # ------------------- CV categories BM+GB
+  GhaPlaBMGB <- Gha %>%
+    mutate(Cat = cut(Classe, breaks=c(0, 17.5, 27.5, 47.5, 200),
+                     labels=c("PER","PB","BM", "GB"))) %>%
+    filter(Cat=="GB"| Cat=="BM") %>%
+    group_by(idp) %>%
+    summarise(Gtot = sum(Gha)) %>%
+    summarise(Moy = sum(Gtot)/n,
+              Sd = ((n*sum(Gtot^2)-sum(Gtot)^2)/n/(n-1))^0.5,
+              Cv = Sd/Moy) %>%
+    mutate(Population = "GB + BM") %>%
+    dplyr::select(Population, Moy, Cv) %>%
+    rename(Gha = Moy)
+  tab <- rbind(tab, GhaPlaBMGB)
 
   # ------------------- CV GB+BM 2 essences principales
   GhaPla <- Gha %>%
