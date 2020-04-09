@@ -38,8 +38,8 @@ edit_guide_doc <- function(template = "inst/IFNinfos.Rnw") {
     
     # -- définition des arguments nécessaires au knit
     repPdf     <- file.path(output_dir)
-    repLogos   <- file.path(rep, "inst/Images/")
-    repFigures <- file.path(rep, "inst/figures/")
+    repLogos   <- file.path(rep, "Images/")
+    repFigures <- file.path(rep, "figures/")
     
     # -- superassignements
     # nom de la sortie en .tex
