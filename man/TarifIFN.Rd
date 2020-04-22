@@ -7,7 +7,7 @@
 TarifIFN(
   perim = NULL,
   SeuilCircf = 50,
-  SeuilNb = 10,
+  SeuilNb = 5,
   pas = 1000,
   UseSer = F,
   enreg = F

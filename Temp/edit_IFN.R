@@ -1,21 +1,13 @@
 # Installation/Activation des packages nécessaires
 library(easypackages)
-
-# library(tcltk)
-# library(sf)
-# library(rlang)
-# library(knitr)
-
 packages(
   "rlang","rmarkdown","knitr","tools","here",
-  "tidyverse","openxlsx","xtable","ggrepel","ggthemes",
+  "tidyverse","sf","openxlsx","xtable","ggrepel","ggthemes",
   "gWidgets2", "gWidgets2tcltk",
    "scales","grid","gridExtra"
 )
 
-
-##### fonction pour éditer document guide du package PPtools #####
-edit_guide_doc <- function(template = "inst/IFNinfos.Rnw") {
+edit_IFNinfos <- function(template = "inst/IFNinfos.Rnw") {
   ##### 1/ Initialisation #####
   rep = dirname(here::here("IFNinfos.rnw"))
   db = new.env()     # création d'un nouvel environnement
@@ -26,7 +18,7 @@ edit_guide_doc <- function(template = "inst/IFNinfos.Rnw") {
   # indb <- ensures(all(. %in% names(db)))
   # indb(c(load(arch1), load(arch2)))
   
-  ##### 2/ Préparation des données  (voir remarque l.38) #####
+  ##### 2/ Préparation des données #####
   with(db, {
     
     # -- Choix du fichier
@@ -42,26 +34,17 @@ edit_guide_doc <- function(template = "inst/IFNinfos.Rnw") {
     output_dir <- paste(dirname(file),"out",sep="/")
     dir.create(output_dir, showWarnings = F, recursive = T)
     
-    
     # -- définition des arguments nécessaires au knit
     repPdf     <- file.path(output_dir)
     repFigures <- file.path(output_dir, "figures/")
-    # repLogos   <- list.files(system.file("R", package = "PPtools")
     repLogos   <- file.path(rep, "inst/Images/")
     
     # -- superassignements
     # nom de la sortie en .tex
     output_filename <- paste0("IFNinfos_", year, ".tex")
     output <<- file.path(repPdf, output_filename)
-    
-    # Possibilité de faire les calculs en amont de l'édition du pdf/Rmd -> moins lourd ? à voir avec profile
-    # # -- building tables needed for edition # TODO : pour RNF, insérer l'interface pour analyse par groupes
-    # build_tables(
-    #   repAFI = repAFI, repSav = repSav, 
-    #   lang = lang, disp = disp, continue
-    # )
+
   })
-  ##### /\ #####
   
   ##### 3/ Edition du document guide #####
   # Attention modifs dans "Preambule.Rnw" et dans "PPtools.Rnw", chunk "TarifErreurSch"
@@ -72,7 +55,6 @@ edit_guide_doc <- function(template = "inst/IFNinfos.Rnw") {
     quiet = TRUE,
     envir = db
   )
-  ##### / \ #####
   
   # -- message de fin
   end_msg <- "Edition du document guide termin\u00E9e"
@@ -82,6 +64,5 @@ edit_guide_doc <- function(template = "inst/IFNinfos.Rnw") {
     icon = "info"
   )
 }
-##### /\ #####
 
-# edit_guide_doc() # debug
+edit_IFNinfos()

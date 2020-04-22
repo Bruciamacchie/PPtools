@@ -15,7 +15,7 @@
 #' @import openxlsx
 #' @import tidyverse
 #' @import readxl
-#' @import Hmisc
+#' @importFrom Hmisc wtd.mean wtd.var
 #'
 #' @author Bruciamacchie Max
 #'
@@ -62,8 +62,10 @@ TarifFindSch <- function(df=NULL, enreg=F) {
       dplyr::select(Essence)
 
     res <- df %>%
+      filter(Essence %in% ListeEss$Essence) %>%
       group_by(Essence) %>%
       summarise_at(vars(numSchR:numSchTL), funs(wtd.mean(., Vol), wtd.var(., Vol)))
+    
     res[,6:9] <- res[,6:9]^0.5/res[,2:5]
     res <- res %>%
       left_join(Nbres, by = "Essence") %>%

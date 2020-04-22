@@ -31,28 +31,33 @@
 #'
 #' @export
 
-TarifIFN <- function(perim=NULL, SeuilCircf=50, SeuilNb=10, pas=1000, UseSer=F, enreg=F) {
+TarifIFN <- function(perim=NULL, SeuilCircf=50, SeuilNb=5, pas=1000, UseSer=F, enreg=F) {
   # ------------ Gestion du perimetre ----------------------------------------------
   perimetre <- Find_Verif_poly(perim)
 
-  # ------------ Extraction placettes ------------------
+  # ------------ Extraction placettes et arbres ------------------
   placettes <- ExtractPlac(perimetre) %>%
     dplyr::select(idp:yl93)
   if (UseSer) {
     placettes <- placettes %>% st_intersection(ser)
   }
+  
+  Echan <- IFNarbres %>%
+    filter(!is.na(v)) %>%
+    filter(idp %in% placettes$idp) %>%
+    filter(c13 >=SeuilCircf) %>% 
+    mutate(code = as.character(espar))
 
   # ------------- simple calcul de moyennes -------------
-  Volumes <- IFNarbres %>%
-    filter(idp %in% placettes$idp) %>%
-    filter(c13 >=SeuilCircf) %>%
+  Volumes <- Echan  %>%
     rename(Essence = espar,
            Vol = v) %>%
-    mutate(Diam = c13/pi)
-
+    mutate(Diam = c13/pi) 
+    
   sortie <- TarifFindSch(Volumes)
   df <- sortie$tab %>%
     rename(code=Essence) %>%
+    mutate(code = as.character(code)) %>% 
     left_join(CodesEssIFN, by = "code")
 
   Num <- df %>%
@@ -71,14 +76,11 @@ TarifIFN <- function(perim=NULL, SeuilCircf=50, SeuilNb=10, pas=1000, UseSer=F, 
     dplyr::select(code,libelle,Nb,Type,Num,CV) %>%
     arrange(libelle)
 
-
   # ------------- krigeage -------------
   grd <- st_make_grid(st_buffer(placettes, dist=450), cellsize=pas) # Création grid
 
-  Tarifs <- IFNarbres %>%
-    filter(!is.na(v)) %>%
-    filter(idp %in% placettes$idp) %>%
-    filter(c13 >=SeuilCircf) %>%
+  Tarifs <- Echan %>%
+    # filter(code %in% df$code) %>% 
     mutate(Diam = c13 / pi,
            SchR  = v/5*70000/(Diam-5)/(Diam-10)-8,
            SchI  = v/5*80000/(Diam-2.5)/(Diam-7.5)-8,
@@ -89,8 +91,14 @@ TarifIFN <- function(perim=NULL, SeuilCircf=50, SeuilNb=10, pas=1000, UseSer=F, 
     group_by(espar,xl93,yl93) %>%
     summarise_all(.funs=mean) %>%
     st_as_sf(coords=c("xl93","yl93"), crs=2154)
-
-  df <- df %>% filter(Nb >= SeuilNb)
+  
+  df <- Tarifs %>% 
+    st_drop_geometry() %>%
+    mutate(code = as.character(espar)) %>%
+    group_by(code) %>% 
+    summarise(Freq = n()) %>% 
+    filter(Freq >= SeuilNb) %>% 
+    left_join(CodesEssIFN, by = "code")
 
   shp <- st_sf(st_sfc(), crs=2154)
   for (i in 1:dim(df)[1]) {
@@ -154,7 +162,8 @@ TarifIFN <- function(perim=NULL, SeuilCircf=50, SeuilNb=10, pas=1000, UseSer=F, 
     theme(axis.line = element_blank(), axis.text = element_blank(),
           axis.ticks = element_blank(), axis.title = element_blank(),
           panel.background = element_blank(), panel.border = element_blank(),
-          panel.grid = element_blank())
+          panel.grid = element_blank()) +
+    theme(legend.position="bottom")
 
   tab <- shp1 %>%
     st_drop_geometry() %>%
@@ -172,7 +181,7 @@ TarifIFN <- function(perim=NULL, SeuilCircf=50, SeuilNb=10, pas=1000, UseSer=F, 
     print(paste0("Le résultat a été sauvegardé à l'adresse : ",getwd(),"/Out"))
   }
   out=list(tab, gopt, Moys, sortie$graph, shp, g)
-  names(out) <- c("Ktab","Kgraph", "MoyTab","MoyGraph","Ksf","Kgraph")
+  names(out) <- c("Ktab","Kgraph", "MoyTab","MoyGraph","Ksf","KgraphTous")
   return(out)
 }
 
