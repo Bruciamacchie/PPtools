@@ -38,7 +38,8 @@
 #' library(DataForet)
 #' library(PPtools)
 #' #
-#' res <- CvIFNCvIFNmult()
+#' data(FD)
+#' res <- CvIFNmult(FD)
 #' res$tab
 #' res$Nbres
 #'

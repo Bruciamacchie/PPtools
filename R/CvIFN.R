@@ -36,7 +36,9 @@
 #' library(DataForet)
 #' library(PPtools)
 #' #
-#' res <- CvIFN()
+#' data(FD)
+#' perim = FD %>% filter(IIDTN_FRT =="F09405S")
+#' res <- CvIFN(perim)
 #' plot(st_geometry(res$perimetre))
 #' plot(st_geometry(res$placettes), col='red', add=T)
 #'

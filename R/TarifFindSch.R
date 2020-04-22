@@ -27,7 +27,8 @@
 #' library(openxlsx)
 #' library(Hmisc) # pour les moyennes et variances pondérées
 #'
-#' res <- TarifFindSch(tab)
+#' data(Vol)
+#' res <- TarifFindSch(Vol)
 #' ####### Analyse des résultats
 #' res$tab
 #' res$graph

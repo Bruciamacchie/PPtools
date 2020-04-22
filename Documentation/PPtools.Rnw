@@ -322,6 +322,7 @@ La fonction \textbf{\texttt{CSV2SHP}} permet de convertir un fichier de points a
 
 <<CSV2SHP, eval=F>>=
 pts <- CSV2SHP()
+pts
 @
 
 \subsection{CreatePerim}

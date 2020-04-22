@@ -22,10 +22,12 @@ CSV2SHP <- function(epsg=2154, nom="Placettes.shp") {
   file <- tk_choose.files(caption = "Choix du fichier ponctuel au format CSV",
                           filters=matrix(c(".csv",".csv"),1,2, byrow = T))
   if (length(file) > 0) {
+    tab <- read_csv2(file)
     if (sum(c("X","Y") %in% names(tab)) == 2) {
-      shp <- read_csv2(file) %>%
+      shp <- tab %>%
         st_as_sf(coords = c("X","Y"), crs=epsg, agr="constant")
-      st_write(shp, nom, quiet = TRUE)
+      write_sf(shp, nom, quiet = TRUE)
+      return(shp)
     }else {print("Le fichier csv doit contenir une variable X et une variable Y")}
   }else {print("Import du périmètre annulé")}
 }
