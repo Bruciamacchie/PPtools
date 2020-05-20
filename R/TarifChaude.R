@@ -19,11 +19,6 @@
 #' @export
 
 # ------ Chaudé -----------------
-# Changer le format du fichier decChaude
-decChaude2 <- decChaude %>% 
-  pivot_longer(-Classe,names_prefix = "Ch", names_to = "NumTarifCh", values_to = "deltaChaude") %>% 
-  dplyr::rename(ClassTarifChaude = Classe)
-
 #Changement de la fonction
 TarifChaude2 <- function(dataframe, num=13, diam="Diametre", haut="Hauteur") {
   
@@ -41,3 +36,8 @@ TarifChaude2 <- function(dataframe, num=13, diam="Diametre", haut="Hauteur") {
     } else {print("les arguments doivent tous être numeric.")}
   } else {print("Les arguments doivent avoir même longueur.")}
 }
+
+# Changer le format du fichier decChaude
+decChaude2 <- decChaude %>% 
+  pivot_longer(-Classe,names_prefix = "Ch", names_to = "NumTarifCh", values_to = "deltaChaude") %>% 
+  dplyr::rename(ClassTarifChaude = Classe)
