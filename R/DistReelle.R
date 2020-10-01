@@ -3,7 +3,7 @@
 #' @description La fonction permet de calculer les distances réelles sur le terrain en intégrant la pente
 #' à partir d'une maille qui donne les distances horizontales entre deux placettes
 #'
-#' @return La fonction renvoie un tableau de données avec les distances réelles en mètre entre les placettes (les plus proches) et un shape avec le champ correspondant.
+#' @return La fonction renvoie un tableau de données avec les distances réelles en mètre entre les placettes (les plus proches).
 #'
 #' @param shp = shape de la maille du réseau de placettes permanentes (points). Table attributaire avec seulement identifiant de la placette
 #' @param perim = shape du périmètre de la zone d'étude (polygone)
@@ -81,7 +81,7 @@ CalculDistReelle <- function(shp,perim, mnt, nom="MailleDistReelle.shp"){
     rename(to_placette = Placette2)
   
   write.xlsx(essai, "DistancesRéelles.xlsx")
-  st_write(Maille, "MailleDistReelle.shp")
+  # st_write(Maille, "MailleDistReelle.shp")
   }
   
   
