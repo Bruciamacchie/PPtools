@@ -19,19 +19,25 @@
 #' @export
 
 # ------ Chaudé -----------------
-TarifChaude <- function(num=13, diam=45, haut=13) {
-  if ((length(diam)+length(haut)) ==2*length(diam)) {
-    if(class(num)=="numeric"&class(diam)=="numeric"&class(haut)=="numeric") {
-      df2 <- decChaude[,c(1,num+1)]
-      names(df2)[2] = "delta"
-
-      df <- data.frame(Diams=diam, Hauts=haut) %>%
-        mutate(Classe = floor(Diams/5+0.5)*5) %>%
-        left_join(df2, by = "Classe")
-
-      v <- pi/40000*(df$Diams-df$delta*(df$Hauts/2-1.3))^2*df$Hauts
-      return(v)
+#Changement de la fonction
+TarifChaude2 <- function(dataframe, num=13, diam="Diametre", haut="Hauteur") {
+  
+  if ((length(dataframe %>% pull(diam))+length(dataframe %>% pull(haut))) ==2*length(dataframe %>% pull(diam))) {
+    if(class(num)=="numeric"& class(dataframe %>% pull(diam))=="numeric"& class(dataframe %>% pull(haut))=="numeric") {
+      
+      df2 <- decChaude2 %>% 
+        dplyr::filter(NumTarifCh == num)
+      
+      data2 <- dataframe %>% 
+        dplyr::mutate(ClassTarifChaude = floor(get(diam)/5+0.5)*5) %>%
+        left_join(df2, by = "ClassTarifChaude") %>% 
+        mutate(VolChaude = pi/40000*(get(diam)-deltaChaude*(get(haut)/2-1.3))^2*get(haut))
 
     } else {print("les arguments doivent tous être numeric.")}
   } else {print("Les arguments doivent avoir même longueur.")}
 }
+
+# Changer le format du fichier decChaude
+decChaude2 <- decChaude %>% 
+  pivot_longer(-Classe,names_prefix = "Ch", names_to = "NumTarifCh", values_to = "deltaChaude") %>% 
+  dplyr::rename(ClassTarifChaude = Classe)
