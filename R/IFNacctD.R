@@ -48,7 +48,7 @@ IFNacctD <- function(perim=NULL, SeuilCircf=50, SeuilNb=10, UseSer=T, enreg=F) {
     placettes <- placettes %>% st_intersection(DataForet::ser)
   }
 
-    AcctDs <- IFNarbres %>%
+    AcctDs <- DataForet::IFNarbres %>%
       dplyr::filter(idp %in% placettes$idp) %>%
       dplyr::filter(!is.na(ir5) & c13 >=SeuilCircf) %>%
       dplyr::mutate(mortb = as.numeric(as.character(mortb))) %>%
