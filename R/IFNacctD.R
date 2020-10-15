@@ -45,33 +45,35 @@ IFNacctD <- function(perim=NULL, SeuilCircf=50, SeuilNb=10, UseSer=T, enreg=F) {
   placettes <- ExtractPlac(perimetre) %>%
     dplyr::select(idp:yl93)
   if (UseSer) {
-    placettes <- placettes %>% st_intersection(ser)
+    placettes <- placettes %>% st_intersection(DataForet::ser)
   }
 
     AcctDs <- IFNarbres %>%
-      filter(idp %in% placettes$idp) %>%
-      filter(!is.na(ir5) & c13 >=SeuilCircf) %>%
-      mutate(mortb = as.numeric(as.character(mortb))) %>%
-      filter(veget=="0" & mortb<=1 & acci==0) %>%
+      dplyr::filter(idp %in% placettes$idp) %>%
+      dplyr::filter(!is.na(ir5) & c13 >=SeuilCircf) %>%
+      dplyr::mutate(mortb = as.numeric(as.character(mortb))) %>%
+      dplyr::filter(veget=="0" & mortb<=1 & acci==0) %>%
       dplyr::select(espar,c13,ir5) %>%
-      mutate(Diam = round(c13/pi,0)) %>%
-      mutate(Classe=floor(c13/pi/5+0.5)*5) %>%
-      mutate(espar = as.character(espar)) %>%
-      left_join(CodesEssIFN, by=c("espar"="code")) %>%
-      left_join(Ecorces[,c(1,4)], by=c("espar"="codeIFN")) %>%
-      mutate(AcctD = round(ir5*2/50 /(1-2*pi*b/1000),3))
+      dplyr::mutate(Diam = round(c13/pi,0)) %>%
+      dplyr::mutate(Classe=floor(c13/pi/5+0.5)*5) %>%
+      dplyr::mutate(espar = as.character(espar)) %>%
+      dplyr::left_join(CodesEssIFN, by=c("espar"="code")) %>%
+      dplyr::left_join(Ecorces[,c(1,4)], by=c("espar"="codeIFN")) %>%
+      dplyr::mutate(AcctD = round(ir5*2/50 /(1-2*pi*b/1000),3))
 
     df <- AcctDs %>%
-      group_by(espar) %>%
+      dplyr::group_by(espar) %>%
       dplyr::summarise(Freq = n()) %>%
       filter(Freq >= SeuilNb) %>%
       dplyr::rename(code = espar) %>%
-      left_join(CodesEssIFN, by = "code") %>%
-      arrange(desc(Freq)) %>%
+      dplyr::left_join(CodesEssIFN, by = "code") %>%
+      dplyr::arrange(desc(Freq)) %>%
       dplyr::select(code,libelle,Freq)
 
     t2 <- AcctDs %>%
-      filter(espar %in% df$code)
+      dplyr::filter(espar %in% df$code) %>% 
+      dplyr::filter(!is.na(AcctD))
+    
 
     local=2
     p <- ggplot(t2, aes(x=Diam, y=AcctD)) +
@@ -85,7 +87,7 @@ IFNacctD <- function(perim=NULL, SeuilCircf=50, SeuilNb=10, UseSer=T, enreg=F) {
 
     tab <- Xnew
     for(i in 1:dim(ListeEss)[1]) {
-      t3 <- subset(t2, espar==ListeEss[i,1])
+      t3 <- t2 %>% dplyr::filter(espar == ListeEss[i, 1] %>% pull() )
       model <- loess(AcctD ~ Diam, data = t3, span=local)
       res <- data.frame(round(predict(model, newdata = Xnew),2))
       names(res) <- ListeEss[i,2]
